@@ -125,7 +125,7 @@ resource "google_dataform_repository" "notebook_repo" {
   project      = module.project-services.project_id
   region       = local.dataform_region
   name         = local.notebook_names[count.index]
-  display_name = local.notebook_names[count.index]
+  display_name = replace(local.notebook_names[count.index], "_", " ")
   labels = {
     "data-warehouse"         = "true"
     "single-file-asset-type" = "notebook"
@@ -136,11 +136,11 @@ resource "google_dataform_repository" "notebook_repo" {
 ## Grant Cloud Function service account access to write to the repo
 resource "google_dataform_repository_iam_member" "function_manage_repo" {
   provider   = google-beta
+  count      = length(local.notebook_names)
   project    = module.project-services.project_id
   region     = local.dataform_region
   role       = "roles/dataform.admin"
   member     = "serviceAccount:${google_service_account.cloud_function_manage_sa.email}"
-  count      = length(local.notebook_names)
   repository = local.notebook_names[count.index]
   depends_on = [time_sleep.wait_after_apis, google_service_account_iam_member.workflow_auth_function, google_dataform_repository.notebook_repo]
 }
@@ -148,11 +148,11 @@ resource "google_dataform_repository_iam_member" "function_manage_repo" {
 ## Grant Cloud Workflows service account access to write to the repo
 resource "google_dataform_repository_iam_member" "workflow_manage_repo" {
   provider   = google-beta
+  count      = length(local.notebook_names)
   project    = module.project-services.project_id
   region     = local.dataform_region
   role       = "roles/dataform.admin"
   member     = "serviceAccount:${google_service_account.workflow_manage_sa.email}"
-  count      = length(local.notebook_names)
   repository = local.notebook_names[count.index]
 
   depends_on = [
